@@ -1,231 +1,176 @@
-import React, { useState } from "react";
-import { Form, Button, Card, Row, Col } from "react-bootstrap";
+import React, { useState } from 'react';
+import { Form, Button, Card, Row, Col } from 'react-bootstrap';
 
-const CreateConceptForm = ({
-  onNext,
-  setPreviewData,
-  estadoInicial,
-  currentUserRole,
-}) => {
-  const [formData, setFormData] = useState({
-    Id:"",
-    nombre_usuario: "",
-    correo_usuario: "",
-    area_trabajo: "",
-    solicitante: "",
-    serial_equipo: "",
-    nombre_equipo: "",
-    usuario_equipo: "",
-    marca_equipo: "",
-    modelo_equipo: "",
-    tipo_componente: "",
-    diagnostico: "",
-    recomendaciones: "",
-    tipo_concepto: "",
-    estado: estadoInicial || "",
-    fecha: new Date().toISOString().split("T")[0],
-  });
+const equiposDummy = [
+  {
+    id: 1,
+    nombre: 'CPU-001',
+    tipo: 'CPU',
+    marca: 'HP',
+    modelo: 'EliteDesk',
+    componentes: [
+      { id: 1, nombre: 'Memoria RAM', tipo: 'RAM', capacidad: '8GB' },
+      { id: 2, nombre: 'Disco Duro', tipo: 'HDD', capacidad: '500GB' },
+    ],
+  },
+  {
+    id: 2,
+    nombre: 'Monitor-001',
+    tipo: 'Monitor',
+    marca: 'Dell',
+    modelo: 'P2419H',
+    componentes: [],
+  },
+];
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+// Diagnóstico y recomendaciones por tipo de componente
+const diagnosticosPorComponente = {
+  RAM: [
+    { id: 1, descripcion: 'Memoria insuficiente' },
+    { id: 2, descripcion: 'Error de lectura de memoria' },
+  ],
+  HDD: [
+    { id: 3, descripcion: 'Sectores dañados en el disco duro' },
+    { id: 4, descripcion: 'Disco muy lento' },
+  ],
+  BOARD: [
+    { id: 5, descripcion: 'Falla en la placa madre' },
+    { id: 6, descripcion: 'Conectores dañados' },
+  ],
+};
+
+const recomendacionesPorDiagnostico = {
+  1: 'Ampliar memoria RAM',
+  2: 'Reemplazar módulo de memoria',
+  3: 'Cambiar disco duro',
+  4: 'Actualizar disco por uno SSD',
+  5: 'Reemplazar la board',
+  6: 'Reparar conectores',
+};
+
+const FormularioConcepto = ({ onVolver }) => {
+  const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
+  const [diagnosticosSeleccionados, setDiagnosticosSeleccionados] = useState([]);
+  const [tipoConcepto, setTipoConcepto] = useState('');
+
+  const handleEquipoChange = (e) => {
+    const id = parseInt(e.target.value);
+    const equipo = equiposDummy.find((eq) => eq.id === id);
+    setEquipoSeleccionado(equipo);
+    setDiagnosticosSeleccionados([]);
+    setTipoConcepto('');
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setPreviewData(formData);
-    onNext();
+  const obtenerDiagnosticos = () => {
+    if (!equipoSeleccionado || equipoSeleccionado.tipo !== 'CPU') return [];
+    const tipos = equipoSeleccionado.componentes.map((c) => c.tipo);
+    const diag = tipos.flatMap((tipo) => diagnosticosPorComponente[tipo] || []);
+    return diag.slice(0, 3); // solo 3 ítems
+  };
+
+  const handleDiagnosticoToggle = (id) => {
+    const nuevoDiagnostico = diagnosticosSeleccionados.includes(id)
+      ? diagnosticosSeleccionados.filter((d) => d !== id)
+      : [...diagnosticosSeleccionados, id];
+    setDiagnosticosSeleccionados(nuevoDiagnostico);
+    determinarTipo(nuevoDiagnostico);
+  };
+
+  const determinarTipo = (diagnosticos) => {
+    if (diagnosticos.length >= 2) setTipoConcepto('Repotenciar y Reasignar');
+    else if (diagnosticos.includes(3)) setTipoConcepto('Dar de baja');
+    else if (diagnosticos.includes(1)) setTipoConcepto('Repotenciar');
+    else setTipoConcepto('Reasignar');
+  };
+
+  const obtenerRecomendaciones = () => {
+    return diagnosticosSeleccionados.map((id) => ({
+      id,
+      descripcion: recomendacionesPorDiagnostico[id],
+    }));
+  };
+
+  const handleGuardar = () => {
+    alert(`Concepto guardado para equipo ${equipoSeleccionado?.nombre}\nTipo: ${tipoConcepto}`);
   };
 
   return (
     <Card className="p-4">
-      {/* <h3>Crear Concepto Técnico</h3> */}
-      <Form onSubmit={handleSubmit} style={{ width: "500px" }}>
-
-        <h5 className="mt-4">Datos del Usuario</h5>
-        <Row>
-          <Form.Group>
-            <Form.Label>Estado del Concepto</Form.Label>
-            {currentUserRole === "jefe" ? (
-              <Form.Select
-                name="estado"
-                value={formData.estado}
-                onChange={handleChange}
-              >
-                <option value="En Curso">Seleccionar</option>
-                <option value="Validado">Validado</option>
-                <option value="Aprobado">Aprobado</option>
-              </Form.Select>
-            ) : (
-              <Form.Control
-                type="text"
-                name="estado"
-                value={formData.estado}
-                readOnly
-                plaintext
-                style={{textAlign:"center"}}
-              />
-            )}
-          </Form.Group>
-          <Form.Group>
-              <Form.Label>Consecutivo</Form.Label>
-              <Form.Control
-                name="id"
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Auxiliar</Form.Label>
-              <Form.Control
-                name="nombre_usuario"
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-        
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Correo</Form.Label>
-              <Form.Control
-                type="email"
-                name="correo_usuario"
-                placeholder="name@example.com"
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Solicitante</Form.Label>
-              <Form.Control
-                name="solicitante"
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Área de trabajo</Form.Label>
-              <Form.Control name="area" onChange={handleChange} required />
-            </Form.Group>
-          </Col>
-        </Row>
-
-       
-        <h5 className="mt-4">Información del Equipo</h5>
-        <Row>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Equipo</Form.Label>
-              <Form.Control
-                name="nombre_equipo"
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Serie</Form.Label>
-              <Form.Control
-                name="serial_equipo"
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-          </Col>
-
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Usuario asignado</Form.Label>
-              <Form.Control
-                name="usuario_equipo"
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Marca</Form.Label>
-              <Form.Control
-                name="marca_equipo"
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Modelo</Form.Label>
-              <Form.Control
-                name="modelo_equipo"
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Tipo de Componente</Form.Label>
-              <Form.Select
-                name="tipo_componente"
-                onChange={handleChange}
-                required
-              >
-                <option value="">Seleccionar</option>
-                <option value="Disco duro"> Disco Duro</option>
-                <option value="Memoria">Memoria RAM</option>
-                <option value="Board">Board</option>
-                <option value="Fuente de poder">Fuente de poder</option>
-              </Form.Select>
-            </Form.Group>
-          </Col>
-        </Row>
-
-        {/* Sección 3: Diagnóstico */}
-        <h5 className="mt-4">Diagnóstico</h5>
-        <Form.Group>
-       
-          <Form.Control
-            as="textarea"
-            rows={3}
-            name="diagnostico"
-            onChange={handleChange}
-            required
-          />
-        </Form.Group>
-
-        <Form.Group>
-          <Form.Label>Recomendaciones</Form.Label>
-          <Form.Control
-            as="textarea"
-            rows={2}
-            name="recomendaciones"
-            onChange={handleChange}
-          />
-        </Form.Group>
-
-        <Form.Group>
-          <Form.Label>Tipo de Concepto</Form.Label>
-          <Form.Select name="tipo_concepto" onChange={handleChange} required>
-            <option value="">Seleccionar</option>
-            <option value="Dar de baja">Dar de baja</option>
-            <option value="reasignar">Reasignar</option>
-            <option value="repotenciar">Repotenciar</option>
+      <h5 className="mb-3">Formulario de Concepto Técnico</h5>
+      <Form>
+        <Form.Group className="mb-3">
+          <Form.Label>Seleccionar equipo</Form.Label>
+          <Form.Select onChange={handleEquipoChange} value={equipoSeleccionado?.id || ''}>
+            <option value="">Seleccione un equipo</option>
+            {equiposDummy.map((eq) => (
+              <option key={eq.id} value={eq.id}>
+                {eq.nombre} - {eq.marca} {eq.modelo}
+              </option>
+            ))}
           </Form.Select>
         </Form.Group>
 
-        <Button variant="primary" type="submit" className="mt-3">
-          Crear Concepto
-        </Button>
+        {equipoSeleccionado?.tipo === 'CPU' && (
+          <Card className="p-3 mb-3 bg-light">
+            <strong>Componentes del equipo:</strong>
+            <ul className="mb-0">
+              {equipoSeleccionado.componentes.map((c) => (
+                <li key={c.id}>
+                  {c.nombre} - {c.capacidad}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
+        {equipoSeleccionado && (
+          <>
+            <Form.Group className="mb-3">
+              <Form.Label>Diagnóstico</Form.Label>
+              <Row>
+                {obtenerDiagnosticos().map((d) => (
+                  <Col md={4} key={d.id}>
+                    <Form.Check
+                      label={d.descripcion}
+                      checked={diagnosticosSeleccionados.includes(d.id)}
+                      onChange={() => handleDiagnosticoToggle(d.id)}
+                    />
+                  </Col>
+                ))}
+              </Row>
+            </Form.Group>
+
+            {diagnosticosSeleccionados.length > 0 && (
+              <Form.Group className="mb-3">
+                <Form.Label>Recomendaciones</Form.Label>
+                <Row>
+                  {obtenerRecomendaciones().map((r) => (
+                    <Col md={4} key={r.id}>
+                      <Form.Control plaintext readOnly defaultValue={`- ${r.descripcion}`} />
+                    </Col>
+                  ))}
+                </Row>
+              </Form.Group>
+            )}
+
+            <Form.Group className="mb-3">
+              <Form.Label>Tipo de Concepto</Form.Label>
+              <Form.Control value={tipoConcepto} readOnly />
+            </Form.Group>
+          </>
+        )}
+
+        <div className="d-flex justify-content-between">
+          <Button variant="secondary" onClick={onVolver}>
+            Volver
+          </Button>
+          <Button variant="primary" onClick={handleGuardar} disabled={!tipoConcepto}>
+            Guardar Concepto
+          </Button>
+        </div>
       </Form>
     </Card>
   );
 };
 
-export default CreateConceptForm;
+export default FormularioConcepto;

@@ -1,6 +1,7 @@
 
 import './App.css'
 //import 'bootstrap/dist/css/bootstrap.min.css';
+import Dashboard from './components/Dashboard';
 
 import StepperConcept from './components/Traceability';
 
@@ -10,7 +11,7 @@ function App() {
   return (
     <>
     <div className='app'>
-      <StepperConcept currentUserRole={currentUserRole}/>
+      <Dashboard/>
       </div>
   
     

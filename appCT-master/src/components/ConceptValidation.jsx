@@ -1,238 +1,114 @@
-import React, { useState, useEffect } from "react";
-import { Button, Card, Form, Row, Col } from "react-bootstrap";
+import React, { useState } from 'react';
+import { Card, Button, Form, Row, Col } from 'react-bootstrap';
 
-const ConceptValidation = ({
-  data,
-  onNext,
-  onBack,
-  onUpdateData,
-  currentUserRole,
-}) => {
-  const [editMode, setEditMode] = useState(false);
-  const [editedData, setEditedData] = useState({ ...data });
+const conceptoDummy = {
+  ticket: 'TCK-1234',
+  equipo: {
+    nombre: 'CPU-001',
+    tipo: 'CPU',
+    marca: 'HP',
+    modelo: 'EliteDesk',
+    componentes: [
+      { id: 1, nombre: 'Memoria RAM', tipo: 'RAM', capacidad: '8GB' },
+      { id: 2, nombre: 'Disco Duro', tipo: 'HDD', capacidad: '500GB' },
+    ],
+  },
+  diagnosticos: [
+    { id: 1, descripcion: 'Memoria insuficiente', componente: 'Memoria RAM' },
+    { id: 2, descripcion: 'Falla en disco duro', componente: 'Disco Duro' },
+  ],
+  recomendaciones: [
+    { id: 1, descripcion: 'Ampliar memoria a 16GB' },
+    { id: 2, descripcion: 'Reemplazar disco' },
+  ],
+  tipoDiagnostico: 'Repotenciar y Reasignar',
+  comentarios: 'Requiere mejoras para continuar en uso.',
+  fecha: '2025-04-25',
+};
 
-  useEffect(() => {
-    if (currentUserRole === "coordinador") {
-      setEditedData((prev) => ({ ...prev, estado: "Realizado" }));
-    }
-  }, [currentUserRole]);
+const RevisionCoordinador = ({ onVolver }) => {
+  const [estado, setEstado] = useState(null);
+  const [observaciones, setObservaciones] = useState('');
 
-  const handleChange = (e) => {
-    setEditedData({
-      ...editedData,
-      [e.target.name]: e.target.value,
-    });
+  const handleValidar = () => {
+    setEstado('Validado');
+    alert('Concepto validado por el coordinador.');
   };
 
-  const saveChanges = () => {
-    onUpdateData(editedData);
-    setEditMode(false);
-  };
-
-  const handleAprobar = () => {
-    const actualizado = { ...editedData, estado: "Realizado" };
-    onUpdateData(actualizado);
-    onNext();
+  const handleDevolver = () => {
+    setEstado('Devuelto');
+    alert('Concepto devuelto al auxiliar con observaciones.');
   };
 
   return (
     <Card className="p-4">
-      <h5>Revisión del Coordinador</h5>
+      <h4>Revisión del Concepto Técnico</h4>
 
-      <Form style={{ maxWidth: "700px" }}>
-        <Form.Group>
-          <Form.Label>Estado</Form.Label>
-          <Form.Control
-            type="text"
-            name="estado"
-            value={editedData.estado || "Realizado"}
-            readOnly
-            plaintext
-            style={{ textAlign: "center", fontWeight: "bold" }}
-          />
-        </Form.Group>
+      <Row className="mt-3">
+        <Col><strong>Ticket:</strong> {conceptoDummy.ticket}</Col>
+        <Col><strong>Fecha:</strong> {conceptoDummy.fecha}</Col>
+      </Row>
 
-        <Form.Group>
-          <Form.Label>Consecutivo</Form.Label>
-          <Form.Control
-            name="id"
-            value={editedData.id}
-            onChange={handleChange}
-            required
-          />
-        </Form.Group>
+      <hr />
 
-        <Row className="mb-3">
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Auxiliar</Form.Label>
-              <Form.Control
-                type="text"
-                value={editedData.nombre_usuario}
-                disabled
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Correo</Form.Label>
-              <Form.Control
-                type="text"
-                value={editedData.correo_usuario}
-                disabled
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Solicitante</Form.Label>
-              <Form.Control
-                type="text"
-                value={editedData.solicitante}
-                disabled
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Área</Form.Label>
-              <Form.Control type="text" value={editedData.area} disabled />
-            </Form.Group>
-          </Col>
-        </Row>
-        <h5 className="mt-4">Información del Equipo</h5>
-        <Row className="mb-3">
-          <Col md={6}>
-            <Form.Group className="mb-3">
-              <Form.Label>Equipo</Form.Label>
-              <Form.Control
-                type="text"
-                name="nombre_equipo"
-                value={editedData.nombre_equipo}
-                onChange={handleChange}
-                disabled={!editMode}
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group className="mb-3">
-              <Form.Label>Serie</Form.Label>
-              <Form.Control
-                type="text"
-                value={editedData.serial_equipo}
-                disabled
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group className="mb-3">
-              <Form.Label>Usuario Asignado</Form.Label>
-              <Form.Control
-                type="text"
-                value={editedData.usuario_equipo}
-                disabled
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group className="mb-3">
-              <Form.Label>Marca</Form.Label>
-              <Form.Control
-                type="text"
-                value={editedData.marca_equipo}
-                disabled
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group className="mb-3">
-              <Form.Label>Modelo</Form.Label>
-              <Form.Control
-                type="text"
-                value={editedData.modelo_equipo}
-                disabled
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group className="mb-3">
-              <Form.Label>Tipo de Componente</Form.Label>
-              <Form.Select
-                name="tipo_componente"
-                value={editedData.tipo_componente}
-                onChange={handleChange}
-                disabled={!editMode}
-              >
-                <option value="">Seleccionar</option>
-                <option value="Disco duro"> Disco Duro</option>
-                <option value="Memoria">Memoria RAM</option>
-                <option value="Board">Board</option>
-                <option value="Fuente de poder">Fuente de poder</option>
-              </Form.Select>
-            </Form.Group>
-          </Col>
-        </Row>
+      <h5>Equipo</h5>
+      <p><strong>Nombre:</strong> {conceptoDummy.equipo.nombre}</p>
+      <p><strong>Tipo:</strong> {conceptoDummy.equipo.tipo}</p>
+      <p><strong>Marca/Modelo:</strong> {conceptoDummy.equipo.marca} {conceptoDummy.equipo.modelo}</p>
 
-        <Form.Group className="mb-3">
-          <Form.Label>Diagnóstico</Form.Label>
-          <Form.Control
-            as="textarea"
-            name="diagnostico"
-            value={editedData.diagnostico}
-            onChange={handleChange}
-            disabled={!editMode}
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Recomendaciones</Form.Label>
-          <Form.Control
-            as="textarea"
-            name="recomendaciones"
-            value={editedData.recomendaciones}
-            onChange={handleChange}
-            disabled={!editMode}
-          />
-        </Form.Group>
+      <h6>Componentes:</h6>
+      <ul>
+        {conceptoDummy.equipo.componentes.map(comp => (
+          <li key={comp.id}>{comp.nombre} - {comp.capacidad}</li>
+        ))}
+      </ul>
 
-        <Form.Group className="mb-3">
-          <Form.Label>Tipo de Concepto</Form.Label>
-          <Form.Select
-            name="tipo_concepto"
-            value={editedData.tipo_concepto}
-            onChange={handleChange}
-            disabled={!editMode}
-          >
-            <option value="Dar de baja">Dar de baja</option>
-            <option value="Reasignar">Reasignar</option>
-            <option value="Repotenciar">Repotenciar</option>
-          </Form.Select>
-        </Form.Group>
+      <hr />
 
-        <Form.Group>
-          <Form.Label>Fecha</Form.Label>
-          <Form.Control type="text" value={editedData.fecha} disabled />
-        </Form.Group>
-      </Form>
+      <h5>Diagnóstico</h5>
+      <ul>
+        {conceptoDummy.diagnosticos.map(d => (
+          <li key={d.id}>{d.descripcion} ({d.componente})</li>
+        ))}
+      </ul>
 
-      <div className="mt-3">
-        <Button variant="secondary" onClick={onBack}>
-          Devolver
-        </Button>{" "}
-        {!editMode ? (
-          <Button variant="warning" onClick={() => setEditMode(true)}>
-            Editar
-          </Button>
-        ) : (
-          <Button variant="info" onClick={saveChanges}>
-            Guardar Cambios
-          </Button>
-        )}{" "}
-        <Button variant="success" onClick={handleAprobar}>
-          Validar
-        </Button>
+      <h5>Recomendaciones</h5>
+      <ul>
+        {conceptoDummy.recomendaciones.map(r => (
+          <li key={r.id}>{r.descripcion}</li>
+        ))}
+      </ul>
+
+      <p><strong>Tipo de Concepto:</strong> {conceptoDummy.tipoDiagnostico}</p>
+
+      <Form.Group className="mt-3">
+        <Form.Label>Comentarios del auxiliar</Form.Label>
+        <Form.Control as="textarea" value={conceptoDummy.comentarios} readOnly />
+      </Form.Group>
+
+      <Form.Group className="mt-3">
+        <Form.Label>Observaciones del coordinador</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={3}
+          value={observaciones}
+          onChange={(e) => setObservaciones(e.target.value)}
+        />
+      </Form.Group>
+
+      <div className="mt-4">
+        <Button variant="secondary" onClick={onVolver}>Volver</Button>{' '}
+        <Button variant="success" onClick={handleValidar}>Validar</Button>{' '}
+        <Button variant="danger" onClick={handleDevolver}>Devolver</Button>
       </div>
+
+      {estado && (
+        <div className="mt-3">
+          <strong>Estado actual:</strong> {estado}
+        </div>
+      )}
     </Card>
   );
 };
 
-export default ConceptValidation;
+export default RevisionCoordinador;
