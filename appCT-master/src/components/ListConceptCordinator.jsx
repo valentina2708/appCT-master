@@ -25,7 +25,7 @@ const conceptosDummy = [
     comentarios: 'Actualizar para uso de software nuevo',
     fecha: '2025-04-25'
   },
-  // Puedes agregar más conceptos aquí
+ 
 ];
 
 const ListaConceptCoordinador = ({ usuario }) => {

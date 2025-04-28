@@ -4,7 +4,6 @@ import FormularioConcepto from './CreateConceptForm';
 
 const ListConcept = ({ usuario }) => {
   const [mostrarModal, setMostrarModal] = useState(false);
-  
   const [conceptos, setConceptos] = useState([
     {
       id: 1,
@@ -16,7 +15,11 @@ const ListConcept = ({ usuario }) => {
   ]);
 
   const agregarConcepto = (nuevoConcepto) => {
-    setConceptos([...conceptos, { ...nuevoConcepto, id: conceptos.length + 1 }]);
+    setConceptos((prev) => [...prev, { ...nuevoConcepto, id: prev.length + 1 }]);
+    setMostrarModal(false);
+  };
+
+  const handleVolver = () => {
     setMostrarModal(false);
   };
 
@@ -56,11 +59,11 @@ const ListConcept = ({ usuario }) => {
           <Modal.Title>Nuevo Concepto Técnico</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <FormularioConcepto onGuardar={agregarConcepto} usuario={usuario} />
+          <FormularioConcepto onGuardar={agregarConcepto} onVolver={handleVolver} />
         </Modal.Body>
       </Modal>
     </div>
   );
 };
 
-export default  ListConcept;
+export default ListConcept;

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Form, Button, Card, Row, Col } from 'react-bootstrap';
 
-const equiposDummy = [
+// Datos de prueba
+const data = [
   {
     id: 1,
     nombre: 'CPU-001',
@@ -23,8 +24,8 @@ const equiposDummy = [
   },
 ];
 
-// Diagnóstico y recomendaciones por tipo de componente
-const diagnosticosPorComponente = {
+// Novedades disponibles según tipo de componente
+const diagnosisByComponent = {
   RAM: [
     { id: 1, descripcion: 'Memoria insuficiente' },
     { id: 2, descripcion: 'Error de lectura de memoria' },
@@ -37,72 +38,127 @@ const diagnosticosPorComponente = {
     { id: 5, descripcion: 'Falla en la placa madre' },
     { id: 6, descripcion: 'Conectores dañados' },
   ],
+  Monitor: [
+    { id: 7, descripcion: 'Pantalla rota' },
+    { id: 8, descripcion: 'Problemas de brillo o color' },
+  ],
 };
 
-const recomendacionesPorDiagnostico = {
+// Recomendaciones automáticas según diagnóstico
+const recommendationByDiagnosis = {
   1: 'Ampliar memoria RAM',
   2: 'Reemplazar módulo de memoria',
   3: 'Cambiar disco duro',
   4: 'Actualizar disco por uno SSD',
   5: 'Reemplazar la board',
   6: 'Reparar conectores',
+  7: 'Dar de baja monitor',
+  8: 'Revisar circuito de imagen',
 };
 
-const FormularioConcepto = ({ onVolver }) => {
+const FormularioConcepto = ({ onVolver, onGuardar }) => {
+  const [usuario, setUsuario] = useState('');
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
-  const [diagnosticosSeleccionados, setDiagnosticosSeleccionados] = useState([]);
+  const [diagnosticosPorComponente, setDiagnosticosPorComponente] = useState({});
   const [tipoConcepto, setTipoConcepto] = useState('');
 
   const handleEquipoChange = (e) => {
     const id = parseInt(e.target.value);
-    const equipo = equiposDummy.find((eq) => eq.id === id);
+    const equipo = data.find((eq) => eq.id === id);
     setEquipoSeleccionado(equipo);
-    setDiagnosticosSeleccionados([]);
+    setDiagnosticosPorComponente({});
     setTipoConcepto('');
   };
 
-  const obtenerDiagnosticos = () => {
-    if (!equipoSeleccionado || equipoSeleccionado.tipo !== 'CPU') return [];
-    const tipos = equipoSeleccionado.componentes.map((c) => c.tipo);
-    const diag = tipos.flatMap((tipo) => diagnosticosPorComponente[tipo] || []);
-    return diag.slice(0, 3); // solo 3 ítems
+  const handleDiagnosticoToggle = (componenteId, diagnosticoId) => {
+    const diagnosticosActuales = diagnosticosPorComponente[componenteId] || [];
+    const nuevosDiagnosticos = diagnosticosActuales.includes(diagnosticoId)
+      ? diagnosticosActuales.filter((d) => d !== diagnosticoId)
+      : [...diagnosticosActuales, diagnosticoId];
+
+    setDiagnosticosPorComponente({
+      ...diagnosticosPorComponente,
+      [componenteId]: nuevosDiagnosticos,
+    });
+
+    determinarTipoConcepto({ ...diagnosticosPorComponente, [componenteId]: nuevosDiagnosticos });
   };
 
-  const handleDiagnosticoToggle = (id) => {
-    const nuevoDiagnostico = diagnosticosSeleccionados.includes(id)
-      ? diagnosticosSeleccionados.filter((d) => d !== id)
-      : [...diagnosticosSeleccionados, id];
-    setDiagnosticosSeleccionados(nuevoDiagnostico);
-    determinarTipo(nuevoDiagnostico);
-  };
-
-  const determinarTipo = (diagnosticos) => {
-    if (diagnosticos.length >= 2) setTipoConcepto('Repotenciar y Reasignar');
-    else if (diagnosticos.includes(3)) setTipoConcepto('Dar de baja');
-    else if (diagnosticos.includes(1)) setTipoConcepto('Repotenciar');
-    else setTipoConcepto('Reasignar');
+  const determinarTipoConcepto = (diagnosticos) => {
+    const todos = Object.values(diagnosticos).flat();
+    if (todos.includes(7) || todos.includes(3)) {
+      setTipoConcepto('Dar de baja');
+    } else if (todos.length >= 2) {
+      setTipoConcepto('Repotenciar y Reasignar');
+    } else if (todos.length === 1) {
+      setTipoConcepto('Repotenciar');
+    } else {
+      setTipoConcepto('Reasignar');
+    }
   };
 
   const obtenerRecomendaciones = () => {
-    return diagnosticosSeleccionados.map((id) => ({
+    const todos = Object.values(diagnosticosPorComponente).flat();
+    return todos.map((id) => ({
       id,
-      descripcion: recomendacionesPorDiagnostico[id],
+      descripcion: recommendationByDiagnosis[id],
     }));
   };
 
+  const generarTicket = () => {
+    // Aquí podrías generar un ticket automático tipo TCK-002
+    const random = Math.floor(Math.random() * 900) + 100;
+    return `TCK-${random}`;
+  };
+
   const handleGuardar = () => {
-    alert(`Concepto guardado para equipo ${equipoSeleccionado?.nombre}\nTipo: ${tipoConcepto}`);
+    if (!equipoSeleccionado || !usuario || !tipoConcepto) {
+      alert('Debe completar todos los campos.');
+      return;
+    }
+
+    const nuevoConcepto = {
+      ticket: generarTicket(),
+      equipo: `${equipoSeleccionado.nombre} - ${equipoSeleccionado.marca} ${equipoSeleccionado.modelo}`,
+      estado: 'En curso',
+      fecha: new Date().toISOString().split('T')[0], // Fecha actual formato YYYY-MM-DD
+      usuario: usuario,
+      diagnosticos: diagnosticosPorComponente,
+      recomendaciones: obtenerRecomendaciones(),
+      tipoConcepto: tipoConcepto,
+    };
+
+    // Aquí realmente se manda al padre
+    onGuardar(nuevoConcepto);
+
+    // Reset
+    setUsuario('');
+    setEquipoSeleccionado(null);
+    setDiagnosticosPorComponente({});
+    setTipoConcepto('');
   };
 
   return (
     <Card className="p-4">
       <h5 className="mb-3">Formulario de Concepto Técnico</h5>
       <Form>
+        {/* Información de usuario */}
+        <Form.Group className="mb-3">
+          <Form.Label>Nombre del Usuario</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Ingrese nombre del usuario"
+            value={usuario}
+            onChange={(e) => setUsuario(e.target.value)}
+          />
+        </Form.Group>
+
+        {/* Selección de equipo */}
         <Form.Group className="mb-3">
           <Form.Label>Seleccionar equipo</Form.Label>
           <Form.Select onChange={handleEquipoChange} value={equipoSeleccionado?.id || ''}>
             <option value="">Seleccione un equipo</option>
-            {equiposDummy.map((eq) => (
+            {data.map((eq) => (
               <option key={eq.id} value={eq.id}>
                 {eq.nombre} - {eq.marca} {eq.modelo}
               </option>
@@ -110,61 +166,54 @@ const FormularioConcepto = ({ onVolver }) => {
           </Form.Select>
         </Form.Group>
 
-        {equipoSeleccionado?.tipo === 'CPU' && (
-          <Card className="p-3 mb-3 bg-light">
-            <strong>Componentes del equipo:</strong>
-            <ul className="mb-0">
-              {equipoSeleccionado.componentes.map((c) => (
-                <li key={c.id}>
-                  {c.nombre} - {c.capacidad}
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
-
+        {/* Mostrar componentes y novedades */}
         {equipoSeleccionado && (
           <>
-            <Form.Group className="mb-3">
-              <Form.Label>Diagnóstico</Form.Label>
-              <Row>
-                {obtenerDiagnosticos().map((d) => (
-                  <Col md={4} key={d.id}>
-                    <Form.Check
-                      label={d.descripcion}
-                      checked={diagnosticosSeleccionados.includes(d.id)}
-                      onChange={() => handleDiagnosticoToggle(d.id)}
-                    />
-                  </Col>
+            {equipoSeleccionado.componentes.length > 0 ? (
+              equipoSeleccionado.componentes.map((comp) => (
+                <Card key={comp.id} className="p-3 mb-3 bg-light">
+                  <strong>Componente: {comp.nombre} ({comp.capacidad})</strong>
+                  <Row className="mt-2">
+                    {(diagnosisByComponent[comp.tipo] || []).map((d) => (
+                      <Col md={6} key={d.id}>
+                        <Form.Check
+                          label={d.descripcion}
+                          checked={diagnosticosPorComponente[comp.id]?.includes(d.id) || false}
+                          onChange={() => handleDiagnosticoToggle(comp.id, d.id)}
+                        />
+                      </Col>
+                    ))}
+                  </Row>
+                </Card>
+              ))
+            ) : (
+              <Card className="p-3 mb-3 bg-light">
+                <strong>Este equipo no tiene componentes listados.</strong>
+                {(diagnosisByComponent[equipoSeleccionado.tipo] || []).map((d) => (
+                  <Form.Check
+                    key={d.id}
+                    label={d.descripcion}
+                    checked={diagnosticosPorComponente['equipo']?.includes(d.id) || false}
+                    onChange={() => handleDiagnosticoToggle('equipo', d.id)}
+                  />
                 ))}
-              </Row>
-            </Form.Group>
-
-            {diagnosticosSeleccionados.length > 0 && (
-              <Form.Group className="mb-3">
-                <Form.Label>Recomendaciones</Form.Label>
-                <Row>
-                  {obtenerRecomendaciones().map((r) => (
-                    <Col md={4} key={r.id}>
-                      <Form.Control plaintext readOnly defaultValue={`- ${r.descripcion}`} />
-                    </Col>
-                  ))}
-                </Row>
-              </Form.Group>
+              </Card>
             )}
-
-            <Form.Group className="mb-3">
-              <Form.Label>Tipo de Concepto</Form.Label>
-              <Form.Control value={tipoConcepto} readOnly />
-            </Form.Group>
           </>
         )}
 
+        {/* Tipo de concepto */}
+        <Form.Group className="mb-3">
+          <Form.Label>Tipo de Concepto Técnico</Form.Label>
+          <Form.Control value={tipoConcepto} readOnly />
+        </Form.Group>
+
+        {/* Botones */}
         <div className="d-flex justify-content-between">
           <Button variant="secondary" onClick={onVolver}>
             Volver
           </Button>
-          <Button variant="primary" onClick={handleGuardar} disabled={!tipoConcepto}>
+          <Button variant="primary" onClick={handleGuardar}>
             Guardar Concepto
           </Button>
         </div>

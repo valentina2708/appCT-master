@@ -1,32 +1,7 @@
 import React, { useState } from 'react';
-import { Card, Button, Form, Row, Col } from 'react-bootstrap';
+import { Card, Button, Form, Row, Col, ListGroup, Badge } from 'react-bootstrap';
 
-const conceptoDummy = {
-  ticket: 'TCK-1234',
-  equipo: {
-    nombre: 'CPU-001',
-    tipo: 'CPU',
-    marca: 'HP',
-    modelo: 'EliteDesk',
-    componentes: [
-      { id: 1, nombre: 'Memoria RAM', tipo: 'RAM', capacidad: '8GB' },
-      { id: 2, nombre: 'Disco Duro', tipo: 'HDD', capacidad: '500GB' },
-    ],
-  },
-  diagnosticos: [
-    { id: 1, descripcion: 'Memoria insuficiente', componente: 'Memoria RAM' },
-    { id: 2, descripcion: 'Falla en disco duro', componente: 'Disco Duro' },
-  ],
-  recomendaciones: [
-    { id: 1, descripcion: 'Ampliar memoria a 16GB' },
-    { id: 2, descripcion: 'Reemplazar disco' },
-  ],
-  tipoDiagnostico: 'Repotenciar y Reasignar',
-  comentarios: 'Requiere mejoras para continuar en uso.',
-  fecha: '2025-04-25',
-};
-
-const RevisionCoordinador = ({ onVolver }) => {
+const RevisionCoordinador = ({ concepto, onVolver }) => {
   const [estado, setEstado] = useState(null);
   const [observaciones, setObservaciones] = useState('');
 
@@ -41,73 +16,98 @@ const RevisionCoordinador = ({ onVolver }) => {
   };
 
   return (
-    <Card className="p-4">
-      <h4>Revisión del Concepto Técnico</h4>
+    <div className="container mt-4">
+      <Card className="shadow p-4">
+        <h3 className="mb-4 text-primary">Revisión del Concepto Técnico</h3>
 
-      <Row className="mt-3">
-        <Col><strong>Ticket:</strong> {conceptoDummy.ticket}</Col>
-        <Col><strong>Fecha:</strong> {conceptoDummy.fecha}</Col>
-      </Row>
+        {/* Datos del ticket */}
+        <Row className="mb-3">
+          <Col><strong>Ticket:</strong> {concepto.ticket}</Col>
+          <Col><strong>Fecha de creación:</strong> {concepto.fecha}</Col>
+        </Row>
 
-      <hr />
+        <hr />
 
-      <h5>Equipo</h5>
-      <p><strong>Nombre:</strong> {conceptoDummy.equipo.nombre}</p>
-      <p><strong>Tipo:</strong> {conceptoDummy.equipo.tipo}</p>
-      <p><strong>Marca/Modelo:</strong> {conceptoDummy.equipo.marca} {conceptoDummy.equipo.modelo}</p>
+        {/* Datos del equipo */}
+        <h5 className="text-secondary">Información del Equipo</h5>
+        <Row className="mb-2">
+          <Col md={4}><strong>Nombre:</strong> {concepto.equipo.nombre}</Col>
+          <Col md={4}><strong>Tipo:</strong> {concepto.equipo.tipo}</Col>
+          <Col md={4}><strong>Marca/Modelo:</strong> {concepto.equipo.marca} {concepto.equipo.modelo}</Col>
+        </Row>
 
-      <h6>Componentes:</h6>
-      <ul>
-        {conceptoDummy.equipo.componentes.map(comp => (
-          <li key={comp.id}>{comp.nombre} - {comp.capacidad}</li>
-        ))}
-      </ul>
+        {/* Componentes */}
+        <h6 className="mt-3">Componentes:</h6>
+        <ListGroup className="mb-3">
+          {concepto.equipo.componentes.map(comp => (
+            <ListGroup.Item key={comp.id}>
+              <Badge bg="info" className="me-2">{comp.tipo}</Badge>
+              {comp.nombre} - {comp.capacidad}
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
 
-      <hr />
+        <hr />
 
-      <h5>Diagnóstico</h5>
-      <ul>
-        {conceptoDummy.diagnosticos.map(d => (
-          <li key={d.id}>{d.descripcion} ({d.componente})</li>
-        ))}
-      </ul>
+        {/* Diagnóstico */}
+        <h5 className="text-secondary">Diagnóstico</h5>
+        <ListGroup className="mb-3">
+          {concepto.diagnosticos.map(d => (
+            <ListGroup.Item key={d.id}>
+              <strong>{d.componente}:</strong> {d.descripcion}
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
 
-      <h5>Recomendaciones</h5>
-      <ul>
-        {conceptoDummy.recomendaciones.map(r => (
-          <li key={r.id}>{r.descripcion}</li>
-        ))}
-      </ul>
+        {/* Recomendaciones */}
+        <h5 className="text-secondary">Recomendaciones</h5>
+        <ListGroup className="mb-3">
+          {concepto.recomendaciones.map(r => (
+            <ListGroup.Item key={r.id}>
+              {r.descripcion}
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
 
-      <p><strong>Tipo de Concepto:</strong> {conceptoDummy.tipoDiagnostico}</p>
+        {/* Tipo de concepto */}
+        <Row className="mb-3">
+          <Col>
+            <p><strong>Tipo de Concepto:</strong> 
+              <span className="badge bg-success ms-2">{concepto.tipoConcepto}</span>
+            </p>
+          </Col>
+        </Row>
 
-      <Form.Group className="mt-3">
-        <Form.Label>Comentarios del auxiliar</Form.Label>
-        <Form.Control as="textarea" value={conceptoDummy.comentarios} readOnly />
-      </Form.Group>
+        <hr />
 
-      <Form.Group className="mt-3">
-        <Form.Label>Observaciones del coordinador</Form.Label>
-        <Form.Control
-          as="textarea"
-          rows={3}
-          value={observaciones}
-          onChange={(e) => setObservaciones(e.target.value)}
-        />
-      </Form.Group>
 
-      <div className="mt-4">
-        <Button variant="secondary" onClick={onVolver}>Volver</Button>{' '}
-        <Button variant="success" onClick={handleValidar}>Validar</Button>{' '}
-        <Button variant="danger" onClick={handleDevolver}>Devolver</Button>
-      </div>
+        {/* Observaciones del coordinador */}
+        <h5 className="text-secondary">Observaciones del Coordinador</h5>
+        <Form.Group className="mb-4">
+          <Form.Control
+            as="textarea"
+            rows={3}
+            placeholder="Escribe tus observaciones aquí..."
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+          />
+        </Form.Group>
 
-      {estado && (
-        <div className="mt-3">
-          <strong>Estado actual:</strong> {estado}
+        {/* Botones de acción */}
+        <div className="d-flex justify-content-end">
+          <Button variant="secondary" onClick={onVolver} className="me-2">Volver</Button>
+          <Button variant="danger" onClick={handleDevolver} className="me-2">Devolver</Button>
+          <Button variant="success" onClick={handleValidar}>Validar</Button>
         </div>
-      )}
-    </Card>
+
+        {/* Estado actual */}
+        {estado && (
+          <div className="mt-4 alert alert-info">
+            <strong>Estado actual:</strong> {estado}
+          </div>
+        )}
+      </Card>
+    </div>
   );
 };
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import  ListConcept from './ListConcept';
-import ListaConceptCoordinador from './ListConceptCoordinador';
-// import ListaConceptosJefe from './Jefe/ListaConceptosJefe';
+import ListaConceptCoordinador from './ListConceptCordinator';
+import ListConceptBoss from './ListConceptBoss';
 
 
 const usuarioActual = {
@@ -19,7 +19,7 @@ const Dashboard = () => {
 
       {usuarioActual.rol === 'auxiliar' && <ListConcept usuario={usuarioActual} />}
       {usuarioActual.rol === 'coordinador' && <ListaConceptCoordinador usuario={usuarioActual}/>}
-      {/* {usuarioActual.rol === 'jefe' && <ListaConceptosJefe usuario={usuarioActual} />} */}
+      {usuarioActual.rol === 'jefe' && <ListConceptBoss usuario={usuarioActual} />}
 
     </div>
   );
