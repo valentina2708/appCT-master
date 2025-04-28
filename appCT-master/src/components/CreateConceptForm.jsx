@@ -24,7 +24,7 @@ const data = [
   },
 ];
 
-// Novedades disponibles según tipo de componente
+
 const diagnosisByComponent = {
   RAM: [
     { id: 1, descripcion: 'Memoria insuficiente' },
@@ -44,7 +44,7 @@ const diagnosisByComponent = {
   ],
 };
 
-// Recomendaciones automáticas según diagnóstico
+
 const recommendationByDiagnosis = {
   1: 'Ampliar memoria RAM',
   2: 'Reemplazar módulo de memoria',
@@ -106,7 +106,6 @@ const FormularioConcepto = ({ onVolver, onGuardar }) => {
   };
 
   const generarTicket = () => {
-    // Aquí podrías generar un ticket automático tipo TCK-002
     const random = Math.floor(Math.random() * 900) + 100;
     return `TCK-${random}`;
   };
@@ -121,17 +120,16 @@ const FormularioConcepto = ({ onVolver, onGuardar }) => {
       ticket: generarTicket(),
       equipo: `${equipoSeleccionado.nombre} - ${equipoSeleccionado.marca} ${equipoSeleccionado.modelo}`,
       estado: 'En curso',
-      fecha: new Date().toISOString().split('T')[0], // Fecha actual formato YYYY-MM-DD
+      fecha: new Date().toISOString().split('T')[0], 
       usuario: usuario,
       diagnosticos: diagnosticosPorComponente,
       recomendaciones: obtenerRecomendaciones(),
       tipoConcepto: tipoConcepto,
     };
 
-    // Aquí realmente se manda al padre
+   
     onGuardar(nuevoConcepto);
 
-    // Reset
     setUsuario('');
     setEquipoSeleccionado(null);
     setDiagnosticosPorComponente({});
@@ -144,7 +142,8 @@ const FormularioConcepto = ({ onVolver, onGuardar }) => {
       <Form>
         {/* Información de usuario */}
         <Form.Group className="mb-3">
-          <Form.Label>Nombre del Usuario</Form.Label>
+          <Form.Label>Seleccionar Usuario</Form.Label>
+          <Form.Select></Form.Select>
           <Form.Control
             type="text"
             placeholder="Ingrese nombre del usuario"
@@ -166,7 +165,6 @@ const FormularioConcepto = ({ onVolver, onGuardar }) => {
           </Form.Select>
         </Form.Group>
 
-        {/* Mostrar componentes y novedades */}
         {equipoSeleccionado && (
           <>
             {equipoSeleccionado.componentes.length > 0 ? (
@@ -202,16 +200,16 @@ const FormularioConcepto = ({ onVolver, onGuardar }) => {
           </>
         )}
 
-        {/* Tipo de concepto */}
+
         <Form.Group className="mb-3">
           <Form.Label>Tipo de Concepto Técnico</Form.Label>
           <Form.Control value={tipoConcepto} readOnly />
         </Form.Group>
 
-        {/* Botones */}
+     
         <div className="d-flex justify-content-between">
           <Button variant="secondary" onClick={onVolver}>
-            Volver
+            Regresar
           </Button>
           <Button variant="primary" onClick={handleGuardar}>
             Guardar Concepto
