@@ -7,8 +7,9 @@ const ListConcept = ({ usuario }) => {
   const [conceptos, setConceptos] = useState([
     {
       id: 1,
-      ticket: 'TCK-001',
+      consecutivo: 'CT.DA 01',
       equipo: 'CPU Dell OptiPlex',
+      auxiliar: 'Pepito Perez',
       estado: 'En curso',
       fecha: '2025-04-25',
     }
@@ -31,8 +32,9 @@ const ListConcept = ({ usuario }) => {
         <thead>
           <tr>
             <th>#</th>
-            <th>Ticket</th>
+            <th>Consecutivo</th>
             <th>Equipo</th>
+            <th>Auxiliar</th>
             <th>Fecha</th>
             <th>Estado</th>
           </tr>
@@ -41,8 +43,9 @@ const ListConcept = ({ usuario }) => {
           {conceptos.map((c) => (
             <tr key={c.id}>
               <td>{c.id}</td>
-              <td>{c.ticket}</td>
+              <td>{c.consecutivo}</td>
               <td>{c.equipo}</td>
+              <td>{c.auxiliar}</td>
               <td>{c.fecha}</td>
               <td>{c.estado}</td>
             </tr>

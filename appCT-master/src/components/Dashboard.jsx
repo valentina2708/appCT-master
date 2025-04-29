@@ -7,14 +7,14 @@ import ListConceptBoss from './ListConceptBoss';
 const usuarioActual = {
   id: 1,
   nombre: 'Valentina',
-  rol: 'coordinador', 
+  rol: 'auxiliar', 
   area: 'Soporte Técnico'
 };
 
 const Dashboard = () => {
   return (
     <div className="container mt-4">
-      <h2>Bienvenido, {usuarioActual.nombre} ({usuarioActual.rol})</h2>
+      <h3>Bienvenido, {usuarioActual.nombre} ({usuarioActual.rol})</h3>
       <hr />
 
       {usuarioActual.rol === 'auxiliar' && <ListConcept usuario={usuarioActual} />}

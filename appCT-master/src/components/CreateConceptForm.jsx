@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Form, Button, Card } from "react-bootstrap";
+import { Form, Button, Accordion, Card, Badge } from "react-bootstrap";
 
 const usuarios = [
-  { id: 1, nombre: "Juan Pérez" },
-  { id: 2, nombre: "Laura Gómez" },
+  { id: 1, nombre: "Juan Pérez", area: "Tesoreria" },
+  { id: 2, nombre: "Laura Gómez", area: "Tecnologia" },
 ];
 
 const equipos = [
@@ -32,11 +32,11 @@ const equipos = [
 ];
 
 const novedadesPorTipo = {
-  RAM: ["Memoria insuficiente"],
-  HDD: ["Disco mecánico", "Disco insuficiente", "Disco dañado"],
-  CPU: ["Obsolescencia de procesador"],
-  BOARD: ["Daño en board"],
-  Monitor: ["Pantalla dañada", "Fallas de color"],
+  RAM: ["Memoria insuficiente", "Reasignar"],
+  HDD: ["Disco mecánico", "Disco insuficiente", "Disco dañado", "Reasignar"],
+  CPU: ["Obsolescencia de procesador", "Reasignar"],
+  BOARD: ["Daño en board", "Reasignar"],
+  Monitor: ["Pantalla dañada", "Fallas de color", "Reasignar"],
 };
 
 const recomendacionesPorNovedad = {
@@ -51,17 +51,19 @@ const recomendacionesPorNovedad = {
   "Obsolescencia de procesador": ["Dar de baja por obsolescencia"],
   "Pantalla dañada": ["Dar de baja monitor"],
   "Fallas de color": ["Reparación de panel"],
-  "Funciona": ["componetes buenos"],
+  "Reasignar": ["Reasignar equipo"],
 };
 
 const FormularioConcepto = ({ onGuardar, onVolver }) => {
   const [usuarioSolicitante, setUsuarioSolicitante] = useState("");
   const [usuarioEncargado, setUsuarioEncargado] = useState("");
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
+  const [areaSeleccionada, setAreaSeleccionada] = useState("");
   const [novedadesSeleccionadas, setNovedadesSeleccionadas] = useState({});
   const [recomendacionesSeleccionadas, setRecomendacionesSeleccionadas] =
     useState({});
   const [tipoConcepto, setTipoConcepto] = useState("");
+  const [comentarios, setComentarios] = useState("");
 
   const handleEquipoChange = (e) => {
     const id = parseInt(e.target.value);
@@ -78,28 +80,36 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
     novedad.includes("Pantalla dañada");
 
   const handleNovedadChange = (componenteId, novedad) => {
-    const isSelected = novedadesSeleccionadas[componenteId] === novedad;
-    const nuevasNovedades = { ...novedadesSeleccionadas };
-
-    if (isSelected) {
-      delete nuevasNovedades[componenteId];
-    } else {
-      nuevasNovedades[componenteId] = novedad;
-    }
-
+    const nuevasNovedades = { ...novedadesSeleccionadas, [componenteId]: novedad };
     setNovedadesSeleccionadas(nuevasNovedades);
-    setRecomendacionesSeleccionadas({});
-    determinarTipo(nuevasNovedades);
+    setRecomendacionesSeleccionadas((prev) => {
+      const nuevasRecomendaciones = { ...prev };
+      delete nuevasRecomendaciones[componenteId];
+      return nuevasRecomendaciones;
+    });
+    determinarTipo(nuevasNovedades, recomendacionesSeleccionadas);
   };
 
   const handleRecomendacionChange = (componenteId, recomendacion) => {
-    setRecomendacionesSeleccionadas({
+    const nuevasRecomendaciones = {
       ...recomendacionesSeleccionadas,
       [componenteId]: recomendacion,
-    });
+    };
+    setRecomendacionesSeleccionadas(nuevasRecomendaciones);
+    determinarTipo(novedadesSeleccionadas, nuevasRecomendaciones);
   };
 
-  const determinarTipo = (novedadesActuales) => {
+  const determinarTipo = (novedadesActuales, recomendacionesActuales) => {
+    const componentesIds = Object.keys(novedadesActuales);
+    const todasRecomendacionesSeleccionadas = componentesIds.every(
+      (id) => recomendacionesActuales[id]
+    );
+
+    if (!todasRecomendacionesSeleccionadas) {
+      setTipoConcepto("");
+      return;
+    }
+
     const todasNovedades = Object.values(novedadesActuales);
 
     if (todasNovedades.some((n) => esNovedadGrave(n))) {
@@ -108,8 +118,8 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
       todasNovedades.some((n) => n.includes("Memoria") || n.includes("Disco"))
     ) {
       setTipoConcepto("Repotenciar");
-    } else if (todasNovedades.length === 0) {
-      setTipoConcepto("");
+    } else if (todasNovedades.includes("Reasignar")) {
+      setTipoConcepto("Reasignar");
     } else {
       setTipoConcepto("Reasignar");
     }
@@ -117,8 +127,9 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
 
   const handleGuardar = () => {
     const nuevoConcepto = {
-      ticket: `TCK-${Math.floor(Math.random() * 900 + 100)}`,
+      consecutivo: `CT.DA-${Math.floor(Math.random() * 900 + 100)}`,
       equipo: equipoSeleccionado?.nombre,
+      auxiliar: usuarioEncargado,
       fecha: new Date().toISOString().split("T")[0],
       estado: "En curso",
     };
@@ -134,40 +145,62 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
 
   return (
     <Card className="p-4">
-      <h5 className="mb-3">Formulario de Concepto Técnico</h5>
       <Form>
-        <Form.Group className="mb-3">
-          <Form.Label>Usuario Solicitante</Form.Label>
-          <Form.Select
-            value={usuarioSolicitante}
-            onChange={(e) => setUsuarioSolicitante(e.target.value)}
-          >
-            <option value="">Seleccione</option>
-            {usuarios.map((u) => (
-              <option key={u.id} value={u.nombre}>
-                {u.nombre}
-              </option>
-            ))}
-          </Form.Select>
-        </Form.Group>
+        <div className="row">
+          <div className="col">
+            <Form.Group className="mb-3">
+              <h6 className="mb-2">Solicitante</h6>
+              <Form.Select
+                value={usuarioSolicitante}
+                onChange={(e) => setUsuarioSolicitante(e.target.value)}
+              >
+                <option value="">Seleccione</option>
+                {usuarios.map((u) => (
+                  <option key={u.id} value={u.nombre}>
+                    {u.nombre}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </div>
+          <div className="col">
+            <Form.Group className="mb-3">
+              <h6 className="mb-2">Área</h6>
+              <Form.Select
+                value={areaSeleccionada}
+                onChange={(e) => setAreaSeleccionada(e.target.value)}
+              >
+                <option value="">Seleccione</option>
+                {usuarios.map((u) => (
+                  <option key={u.id} value={u.area}>
+                    {u.area}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col">
+            <Form.Group className="mb-3">
+              <h6 className="mb-2">Encargado</h6>
+              <Form.Select
+                value={usuarioEncargado}
+                onChange={(e) => setUsuarioEncargado(e.target.value)}
+              >
+                <option value="">Seleccione</option>
+                {usuarios.map((u) => (
+                  <option key={u.id} value={u.nombre}>
+                    {u.nombre}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </div>
+        </div>
 
         <Form.Group className="mb-3">
-          <Form.Label>Usuario Encargado</Form.Label>
-          <Form.Select
-            value={usuarioEncargado}
-            onChange={(e) => setUsuarioEncargado(e.target.value)}
-          >
-            <option value="">Seleccione</option>
-            {usuarios.map((u) => (
-              <option key={u.id} value={u.nombre}>
-                {u.nombre}
-              </option>
-            ))}
-          </Form.Select>
-        </Form.Group>
-
-        <Form.Group className="mb-3">
-          <Form.Label>Seleccionar equipo</Form.Label>
+          <h6 className="mb-2">Seleccionar equipo</h6>
           <Form.Select
             onChange={handleEquipoChange}
             value={equipoSeleccionado?.id || ""}
@@ -213,12 +246,17 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
               )}
             </Card>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Novedades Encontradas</Form.Label>
-              {equipoSeleccionado.componentes.length > 0 ? (
-                equipoSeleccionado.componentes.map((comp) => (
-                  <div key={comp.id} className="mb-3">
-                    <strong>{comp.nombre}:</strong>
+            <Form.Group className="mb-4">
+          <h5 className="text-center mb-3">Novedades</h5>
+          {equipoSeleccionado.componentes.length > 0 ? (
+            <Accordion defaultActiveKey="0">
+              {equipoSeleccionado.componentes.map((comp, idx) => (
+                <Accordion.Item eventKey={idx.toString()} key={comp.id}>
+                  <Accordion.Header>
+                    <Badge bg="info" className="me-2">{comp.tipo}</Badge>
+                    {comp.nombre}
+                  </Accordion.Header>
+                  <Accordion.Body>
                     {novedadesPorTipo[comp.tipo] ? (
                       novedadesPorTipo[comp.tipo].map((novedad) => (
                         <Form.Check
@@ -231,75 +269,91 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
                             (existeNovedadMenor && esNovedadGrave(novedad))
                           }
                           onChange={() => handleNovedadChange(comp.id, novedad)}
+                          className="mb-2"
                         />
                       ))
                     ) : (
-                      <p>No hay novedades para este componente.</p>
+                      <p className="text-muted">No hay novedades para este componente.</p>
                     )}
-                  </div>
-                ))
-              ) : (
-                <div>
-                  {novedadesPorTipo["Monitor"].map((novedad, idx) => (
-                    <Form.Check
-                      key={idx}
-                      type="checkbox"
-                      label={novedad}
-                      checked={novedadesSeleccionadas[idx] === novedad}
-                      disabled={
-                        (existeNovedadGrave && !esNovedadGrave(novedad)) ||
-                        (existeNovedadMenor && esNovedadGrave(novedad))
-                      }
-                      onChange={() => handleNovedadChange(idx, novedad)}
-                    />
-                  ))}
-                </div>
-              )}
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Recomendaciones</Form.Label>
-              {Object.entries(novedadesSeleccionadas).map(
-                ([compId, novedad]) => (
-                  <div key={compId} className="mb-3">
-                    <strong>Novedad: {novedad}</strong>
-                    {recomendacionesPorNovedad[novedad]?.map((reco) => (
-                      <Form.Check
-                        key={reco}
-                        type="radio"
-                        name={`reco-${compId}`}
-                        label={reco}
-                        checked={recomendacionesSeleccionadas[compId] === reco}
-                        onChange={() => handleRecomendacionChange(compId, reco)}
-                      />
-                    ))}
-                  </div>
-                )
-              )}
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Tipo de Concepto</Form.Label>
-              <div>
-                {tipoConcepto ? (
-                  <span
-                    className={`badge bg-${
-                      tipoConcepto === "Dar de baja"
-                        ? "danger"
-                        : tipoConcepto === "Repotenciar"
-                        ? "primary"
-                        : "success"
-                    }`}
-                  >
-                    {tipoConcepto}
-                  </span>
-                ) : (
-                  <span className="badge bg-secondary">Sin determinar</span>
-                )}
+                  </Accordion.Body>
+                </Accordion.Item>
+              ))}
+            </Accordion>
+          ) : (
+            <div>
+              {novedadesPorTipo["Monitor"].map((novedad, idx) => (
+                <Form.Check
+                  key={idx}
+                  type="checkbox"
+                  label={novedad}
+                  checked={novedadesSeleccionadas[idx] === novedad}
+                  disabled={
+                    (existeNovedadGrave && !esNovedadGrave(novedad)) ||
+                    (existeNovedadMenor && esNovedadGrave(novedad))
+                  }
+                  onChange={() => handleNovedadChange(idx, novedad)}
+                  className="mb-2"
+                />
+              ))}
+            </div>
+          )}
+        </Form.Group>
+        <Form.Group className="mb-4">
+          <h5 className=" mb-3">Recomendaciones</h5>
+          {Object.entries(novedadesSeleccionadas).map(
+            ([compId, novedad]) => (
+              <div key={compId} className="mb-3">
+                <strong>Novedad: {novedad}</strong>
+                {recomendacionesPorNovedad[novedad]?.map((reco) => (
+                  <Form.Check
+                    key={reco}
+                    type="radio"
+                    name={`reco-${compId}`}
+                    label={reco}
+                    checked={recomendacionesSeleccionadas[compId] === reco}
+                    onChange={() => handleRecomendacionChange(compId, reco)}
+                    className="mb-2"
+                  />
+                ))}
               </div>
-            </Form.Group>
+            )
+          )}
+        </Form.Group>
+
+        <Form.Group className="mb-3 text-center">
+          <h5 className="mb-3"> Tipo de Concepto</h5>
+          <div>
+            {tipoConcepto ? (
+              <Badge
+                bg={
+                  tipoConcepto === "Dar de baja"
+                    ? "danger"
+                    : tipoConcepto === "Repotenciar"
+                    ? "warning"
+                    : "success"
+                }
+                className="fs-6"
+              >
+                {tipoConcepto}
+              </Badge>
+            ) : (
+              <Badge bg="secondary" className="fs-6">Sin determinar</Badge>
+            )}
+          </div>
+        </Form.Group>
           </>
         )}
+
+        <h5 className="text-secondary">Comentarios</h5>
+        <Form.Group className="mb-4">
+          <Form.Control
+            as="textarea"
+            rows={3}
+            placeholder="Escribe tus comentarios aqui..."
+            value={comentarios}
+            onChange={(e) => setComentarios(e.target.value)}
+          />
+        </Form.Group>
 
         <div className="d-flex justify-content-between">
           <Button variant="secondary" onClick={onVolver}>
