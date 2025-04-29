@@ -15,20 +15,33 @@ const RevisionCoordinador = ({ concepto, onVolver }) => {
     alert('Concepto devuelto al auxiliar con observaciones.');
   };
 
+  const obtenerColorTipoConcepto = (tipo) => {
+    switch (tipo) {
+      case 'Dar de baja':
+        return 'danger';
+      case 'Repotenciar':
+        return 'warning';
+      case 'Reasignar':
+        return 'success';
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
     <div className="container mt-4">
       <Card className="shadow p-4">
         <h3 className="mb-4 text-primary">Revisión del Concepto Técnico</h3>
 
-        {/* Datos del ticket */}
+        {/* Datos generales */}
         <Row className="mb-3">
-          <Col><strong>Ticket:</strong> {concepto.ticket}</Col>
+          <Col><strong>Consecutivo:</strong> {concepto.ticket}</Col>
           <Col><strong>Fecha de creación:</strong> {concepto.fecha}</Col>
         </Row>
 
         <hr />
 
-        {/* Datos del equipo */}
+        {/* Información del equipo */}
         <h5 className="text-secondary">Información del Equipo</h5>
         <Row className="mb-2">
           <Col md={4}><strong>Nombre:</strong> {concepto.equipo.nombre}</Col>
@@ -37,51 +50,63 @@ const RevisionCoordinador = ({ concepto, onVolver }) => {
         </Row>
 
         {/* Componentes */}
-        <h6 className="mt-3">Componentes:</h6>
-        <ListGroup className="mb-3">
-          {concepto.equipo.componentes.map(comp => (
-            <ListGroup.Item key={comp.id}>
-              <Badge bg="info" className="me-2">{comp.tipo}</Badge>
-              {comp.nombre} - {comp.capacidad}
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
+        <h6 className="mt-3">Componentes del Equipo:</h6>
+        {concepto.equipo.componentes.length > 0 ? (
+          <ListGroup className="mb-3">
+            {concepto.equipo.componentes.map(comp => (
+              <ListGroup.Item key={comp.id}>
+                <Badge bg="info" className="me-2">{comp.tipo}</Badge>
+                {comp.nombre} - {comp.capacidad}
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        ) : (
+          <p className="text-muted">Este equipo no tiene componentes listados.</p>
+        )}
 
         <hr />
 
-        {/* Diagnóstico */}
-        <h5 className="text-secondary">Diagnóstico</h5>
-        <ListGroup className="mb-3">
-          {concepto.diagnosticos.map(d => (
-            <ListGroup.Item key={d.id}>
-              <strong>{d.componente}:</strong> {d.descripcion}
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
+        {/* Diagnóstico (Novedades) */}
+        <h5 className="text-secondary">Novedades Encontradas</h5>
+        {concepto.diagnosticos.length > 0 ? (
+          <ListGroup className="mb-3">
+            {concepto.diagnosticos.map(d => (
+              <ListGroup.Item key={d.id}>
+                <strong>{d.componente}:</strong> {d.descripcion}
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        ) : (
+          <p className="text-muted">No se registraron novedades.</p>
+        )}
 
         {/* Recomendaciones */}
         <h5 className="text-secondary">Recomendaciones</h5>
-        <ListGroup className="mb-3">
-          {concepto.recomendaciones.map(r => (
-            <ListGroup.Item key={r.id}>
-              {r.descripcion}
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
+        {concepto.recomendaciones.length > 0 ? (
+          <ListGroup className="mb-3">
+            {concepto.recomendaciones.map(r => (
+              <ListGroup.Item key={r.id}>
+                {r.descripcion}
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        ) : (
+          <p className="text-muted">No se registraron recomendaciones.</p>
+        )}
 
         {/* Tipo de concepto */}
         <Row className="mb-3">
           <Col>
-            <p><strong>Tipo de Concepto:</strong> 
-              <span className="badge bg-success ms-2">{concepto.tipoConcepto}</span>
-            </p>
+            <strong>Tipo de Concepto:</strong> 
+            <Badge bg={obtenerColorTipoConcepto(concepto.tipoConcepto)} className="ms-2">
+              {concepto.tipoConcepto}
+            </Badge>
           </Col>
         </Row>
 
         <hr />
 
-
-        {/* Observaciones del coordinador */}
+        {/* Observaciones */}
         <h5 className="text-secondary">Observaciones del Coordinador</h5>
         <Form.Group className="mb-4">
           <Form.Control
@@ -100,7 +125,7 @@ const RevisionCoordinador = ({ concepto, onVolver }) => {
           <Button variant="success" onClick={handleValidar}>Validar</Button>
         </div>
 
-        {/* Estado actual */}
+        {/* Estado actual después de validar o devolver */}
         {estado && (
           <div className="mt-4 alert alert-info">
             <strong>Estado actual:</strong> {estado}

@@ -7,7 +7,7 @@ import ListConceptBoss from './ListConceptBoss';
 const usuarioActual = {
   id: 1,
   nombre: 'Valentina',
-  rol: 'auxiliar', 
+  rol: 'coordinador', 
   area: 'Soporte Técnico'
 };
 
