@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Form, Button, Accordion, Card, Badge } from "react-bootstrap";
+import { useConcepto } from '../context/ConceptoContext';
 
 const usuarios = [
   { id: 1, nombre: "Juan Pérez", area: "Tesoreria" },
@@ -32,10 +33,11 @@ const equipos = [
 ];
 
 const novedadesPorTipo = {
-  RAM: ["Memoria insuficiente", "Reasignar"],
-  HDD: ["Disco mecánico", "Disco insuficiente", "Disco dañado", "Reasignar"],
+  RAM: ["Memoria insuficiente"],
+  HDD: ["Disco mecanico", "Disco insuficiente", "Disco dañado"],
   CPU: ["Obsolescencia de procesador", "Reasignar"],
-  BOARD: ["Daño en board", "Reasignar"],
+  BOARD: ["Daño en board"],
+  FUENTE_DE_PODER: ["Fuente dañada"],
   Monitor: ["Pantalla dañada", "Fallas de color", "Reasignar"],
 };
 
@@ -44,10 +46,10 @@ const recomendacionesPorNovedad = {
     "Cambio de RAM de 4GB a 8GB",
     "Adición de 4GB de RAM",
   ],
-  "Disco mecánico": ["Cambio a SSD 512GB", "Cambio a SSD 1TB"],
+  "Disco mecánico": ["Cambio de disco mecanico a disco SSD de 512GB", "Cambio de disco mecanico a disco SSD de una 1TB"],
   "Disco insuficiente": ["Ampliación de disco duro"],
   "Disco dañado": ["Reemplazo de disco duro"],
-  "Daño en board": ["Dar de baja equipo"],
+  "Daño en board": ["Dar de baja por corto en board"],
   "Obsolescencia de procesador": ["Dar de baja por obsolescencia"],
   "Pantalla dañada": ["Dar de baja monitor"],
   "Fallas de color": ["Reparación de panel"],
@@ -55,6 +57,7 @@ const recomendacionesPorNovedad = {
 };
 
 const FormularioConcepto = ({ onGuardar, onVolver }) => {
+  const { agregarConcepto } = useConcepto();
   const [usuarioSolicitante, setUsuarioSolicitante] = useState("");
   const [usuarioEncargado, setUsuarioEncargado] = useState("");
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
@@ -79,16 +82,29 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
     novedad.includes("Obsolescencia") ||
     novedad.includes("Pantalla dañada");
 
-  const handleNovedadChange = (componenteId, novedad) => {
-    const nuevasNovedades = { ...novedadesSeleccionadas, [componenteId]: novedad };
-    setNovedadesSeleccionadas(nuevasNovedades);
-    setRecomendacionesSeleccionadas((prev) => {
-      const nuevasRecomendaciones = { ...prev };
-      delete nuevasRecomendaciones[componenteId];
-      return nuevasRecomendaciones;
-    });
-    determinarTipo(nuevasNovedades, recomendacionesSeleccionadas);
-  };
+    const handleNovedadChange = (componenteId, novedad) => {
+      const novedadActual = novedadesSeleccionadas[componenteId];
+  
+      const nuevasNovedades = { ...novedadesSeleccionadas };
+      if (novedadActual === novedad) {
+        delete nuevasNovedades[componenteId];
+      } else {
+        nuevasNovedades[componenteId] = novedad;
+      }
+    
+      setNovedadesSeleccionadas(nuevasNovedades);
+    
+      setRecomendacionesSeleccionadas((prev) => {
+        const nuevasRecomendaciones = { ...prev };
+        delete nuevasRecomendaciones[componenteId];
+        return nuevasRecomendaciones;
+      });
+    
+      determinarTipo(nuevasNovedades, recomendacionesSeleccionadas);
+    };
+    
+ 
+
 
   const handleRecomendacionChange = (componenteId, recomendacion) => {
     const nuevasRecomendaciones = {
@@ -99,31 +115,36 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
     determinarTipo(novedadesSeleccionadas, nuevasRecomendaciones);
   };
 
+ 
   const determinarTipo = (novedadesActuales, recomendacionesActuales) => {
-    const componentesIds = Object.keys(novedadesActuales);
-    const todasRecomendacionesSeleccionadas = componentesIds.every(
-      (id) => recomendacionesActuales[id]
-    );
-
-    if (!todasRecomendacionesSeleccionadas) {
+    const ids = Object.keys(novedadesActuales);
+    const todasRecomendaciones = ids.every((id) => recomendacionesActuales[id]);
+  
+    if (!todasRecomendaciones) {
       setTipoConcepto("");
       return;
     }
-
-    const todasNovedades = Object.values(novedadesActuales);
-
-    if (todasNovedades.some((n) => esNovedadGrave(n))) {
+  
+    const novedades = Object.values(novedadesActuales);
+    const tieneGraves = novedades.some((n) => esNovedadGrave(n));
+    const tieneReasignar = novedades.some((n) => n === "Reasignar");
+    const tieneRepotenciar = novedades.some(
+      (n) => n.includes("Memoria") || n.includes("Disco")
+    );
+  
+    if (tieneGraves) {
       setTipoConcepto("Dar de baja");
-    } else if (
-      todasNovedades.some((n) => n.includes("Memoria") || n.includes("Disco"))
-    ) {
+    } else if (tieneRepotenciar && tieneReasignar) {
+      setTipoConcepto("Repotenciar y Reasignar");
+    } else if (tieneRepotenciar) {
       setTipoConcepto("Repotenciar");
-    } else if (todasNovedades.includes("Reasignar")) {
+    } else if (tieneReasignar) {
       setTipoConcepto("Reasignar");
     } else {
-      setTipoConcepto("Reasignar");
+      setTipoConcepto("");
     }
   };
+  
 
   const handleGuardar = () => {
     const nuevoConcepto = {
@@ -134,6 +155,7 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
       estado: "En curso",
     };
     onGuardar(nuevoConcepto);
+    agregarConcepto(nuevoConcepto);
   };
 
   const existeNovedadGrave = Object.values(novedadesSeleccionadas).some((n) =>
@@ -142,6 +164,21 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
   const existeNovedadMenor = Object.values(novedadesSeleccionadas).some(
     (n) => !esNovedadGrave(n)
   );
+
+  const esNovedadIncompatible = (novedad) => {
+    const todas = Object.values(novedadesSeleccionadas);
+    const seleccionandoRepotencia = todas.some(n => n.includes("Memoria") || n.includes("Disco"));
+    const seleccionandoBaja = todas.some(n => esNovedadGrave(n));
+  
+    if (seleccionandoBaja && (novedad.includes("Memoria") || novedad.includes("Disco"))) {
+      return true;
+    }
+    if (seleccionandoRepotencia && esNovedadGrave(novedad)) {
+      return true;
+    }
+    return false;
+  };
+  
 
   return (
     <Card className="p-4">
@@ -287,12 +324,14 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
                   type="checkbox"
                   label={novedad}
                   checked={novedadesSeleccionadas[idx] === novedad}
-                  disabled={
-                    (existeNovedadGrave && !esNovedadGrave(novedad)) ||
-                    (existeNovedadMenor && esNovedadGrave(novedad))
-                  }
+                  // disabled={
+                  //   (existeNovedadGrave && !esNovedadGrave(novedad)) ||
+                  //   (existeNovedadMenor && esNovedadGrave(novedad))
+                  // }
                   onChange={() => handleNovedadChange(idx, novedad)}
                   className="mb-2"
+                  disabled={esNovedadIncompatible(novedad)}
+
                 />
               ))}
             </div>
@@ -313,6 +352,8 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
                     checked={recomendacionesSeleccionadas[compId] === reco}
                     onChange={() => handleRecomendacionChange(compId, reco)}
                     className="mb-2"
+                  
+
                   />
                 ))}
               </div>

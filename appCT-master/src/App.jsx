@@ -1,6 +1,6 @@
 
 import './App.css'
-//import 'bootstrap/dist/css/bootstrap.min.css';
+import { ConceptoProvider } from './context/ConceptoContext';
 import Dashboard from './components/Dashboard';
 
 import StepperConcept from './components/Traceability';
@@ -10,11 +10,11 @@ function App() {
 
   return (
     <>
+    <ConceptoProvider>
     <div className='app'>
       <Dashboard/>
       </div>
-  
-    
+    </ConceptoProvider>
     </> 
   )
 }

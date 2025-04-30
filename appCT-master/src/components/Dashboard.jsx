@@ -12,6 +12,7 @@ const usuarioActual = {
 };
 
 const Dashboard = () => {
+
   return (
     <div className="container mt-4">
       <h3>Bienvenido, {usuarioActual.nombre} ({usuarioActual.rol})</h3>
