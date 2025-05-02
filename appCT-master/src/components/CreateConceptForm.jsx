@@ -103,9 +103,6 @@ const FormularioConcepto = ({ onGuardar, onVolver }) => {
       determinarTipo(nuevasNovedades, recomendacionesSeleccionadas);
     };
     
- 
-
-
   const handleRecomendacionChange = (componenteId, recomendacion) => {
     const nuevasRecomendaciones = {
       ...recomendacionesSeleccionadas,
